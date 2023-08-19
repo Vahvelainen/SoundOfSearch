@@ -1,9 +1,11 @@
+
 //Constant parameters
 const pointDensity = 50
 const W = 1 //Weighted A-star weight
 const variability = 5
 const dissortion = 0
 const fadingSpeed = 10
+const fr = 24 //Framerate
 
 //Global variables
 let gridPoints = [] //will be a matrix of points that have coordinates and some resistance value
@@ -17,6 +19,36 @@ let openSet = []
 let visitedPoints = []
 let gScore = {}
 let cameFrom = {}
+
+let playSound = false;
+document.addEventListener('click', e => {
+	playSound = !playSound;
+	if(playSound) {
+		setBeep();
+	}
+	console.log('playsound: ', playSound)
+})
+
+let beeb;
+
+function setBeep() {
+  // Create a p5.Oscillator to generate the beep sound
+  beeb = new p5.Oscillator();
+  beeb.setType('sine');
+  beeb.freq(440);
+  beeb.amp(0);
+  beeb.start();
+}
+
+function playBeeb( freq = 440) {
+  // Play the shot sound (beep)
+	
+	console.log('beeb');
+	beeb.freq(freq);
+	beeb.amp(0, 0.5 / fr, 0.5 / fr);
+	beeb.amp(0.5, 0.5 / fr, 0);
+
+}
 
 function createGridPoints(density) {
 	//Format of the grid poinst matrix will be [x][y] or idk how this works
@@ -102,6 +134,8 @@ function setup() {
 	gridWidth = gridPoints.length;
 	gridHeight = gridPoints[0].length;
 	
+	frameRate(fr);
+
 	//select random goal
 	goalPoint = gridPoints[rndmIndx(gridWidth)][rndmIndx(gridHeight)]
 	
@@ -119,11 +153,18 @@ function setup() {
 function draw() {
 	background(10);
 	
+	
 	if (!foundGoal) {
 		//do the astar
 		//Pop the lowes prio
 		openSet.sort( (a,b) => b.priority - a.priority );
 		const current = openSet.pop()?.point;
+
+		//Play sound according to something?
+		if (playSound) {
+			let freq = ( calculateDistance(current, goalPoint) / pointDensity + 1 ) * 440
+			playBeeb(freq);
+		}
 		
 		drawPathToStart(current);
 		
@@ -137,9 +178,9 @@ function draw() {
 				const neighbour_G = gScore[JSON.stringify(current)] + neighbourcost;
 				
 				if ( !visitedPoints.includes(neighbour) ||
-						neighbour_G < gScore[JSON.stringify(neighbour)] ) {
-						
-						//Draw line to neighbour
+				neighbour_G < gScore[JSON.stringify(neighbour)] ) {
+					
+					//Draw line to neighbour
 						//lineBtwPoints( current, neighbour )
 					
 						visitedPoints.push(neighbour);
